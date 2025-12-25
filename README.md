@@ -190,21 +190,36 @@ npm run dev
 
 
 ---
-### 🗂 Project Structure
+Gridsense/
+├── Backend/
+│   ├── app/
+│   │   ├── auth/              # JWT auth & dependencies
+│   │   ├── ml/                # ML models (anomaly detection, forecasting)
+│   │   ├── models/            # SQLAlchemy models
+│   │   ├── routes/            # API routes
+│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── database.py        # Database connection
+│   │   └── main.py            # FastAPI entry point
+│   │
+│   ├── requirements.txt
+│   └── README.md
+│
+├── Frontend/
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   ├── pages/             # Dashboard, login, analytics pages
+│   │   ├── services/          # API service layer
+│   │   ├── hooks/             # Custom React hooks
+│   │   └── App.jsx
+│   │
+│   ├── public/
+│   └── package.json
+│
+├── Screenshot/                # Project screenshots
+│
+├── README.md
+└── .gitignore
 
-app/
- ├── analytics/
- ├── sensors/
- ├── auth/
- ├── ml/
- ├── ml2/
- ├── ws/
- ├── database.py
- └── main.py
-frontend/
- ├── pages/
- ├── components/
- └── main.jsx
 
 
 ## 📖 What This Project Demonstrates
