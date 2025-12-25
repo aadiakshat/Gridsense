@@ -68,6 +68,38 @@ This project intentionally avoids over-complex models (LSTM, transformers) in fa
 The forecast iteratively predicts future energy values by feeding previous predictions back into the model using rolling statistical features.
 
 ---
+## 📸 Screenshots
+
+### 🔐 Authentication
+**Light Mode**
+![Light Mode Login](Screenshot/LightMode%20Login.png)
+
+**Dark Mode**
+![Dark Mode Login](Screenshot/DarkModeLogin.png)
+
+---
+
+### 📊 Main Dashboard
+![Main Dashboard](Screenshot/MainDashboard.png)
+
+---
+
+### 📈 Energy Analytics & Graphs
+![Graphs](Screenshot/Graphs.png)
+
+---
+
+### ⚡ Peak Load Analysis
+![Peak Load Table](Screenshot/PeakLoadTable.png)
+
+---
+
+### 🤖 ML-Based Forecasting
+**Forecast View**
+![Forecast](Screenshot/Forecast.png)
+
+**ML Predictions Table**
+![ML Table](Screenshot/MLTable.png)
 
 ## 🛠 Tech Stack
 
