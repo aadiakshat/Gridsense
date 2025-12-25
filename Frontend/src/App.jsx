@@ -1,176 +1,150 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DarkModeToggle from './darkmode';
 
 export default function AuthInterface() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
   const navigate = useNavigate();
+
   const handleSubmit = async () => {
     setError('');
-    setSuccess('');
     setLoading(true);
 
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/signup';
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch('http://localhost:8000/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
-      setSuccess(isLogin ? 'Login successful!' : 'Account created successfully!');
-      localStorage.setItem('access_token', data.access_token);
-
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 800);
-    } else {
-        setError(data.detail || 'Something went wrong');
+      if (!res.ok) {
+        setError(data.detail || 'Invalid credentials');
+        return;
       }
-    } catch (err) {
-      setError('Unable to connect to server');
+
+      localStorage.setItem('access_token', data.access_token);
+      navigate('/dashboard');
+    } catch {
+      setError('Server unreachable');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4
-                    bg-gray-50 dark:bg-gray-900
-                    text-gray-900 dark:text-gray-100">
+    <div className="min-h-screen flex items-center justify-center px-4
+      bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
-      {/* 🌙 Dark mode toggle */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Dark mode */}
+      <div className="fixed top-5 right-5 z-50">
         <DarkModeToggle />
       </div>
+      
+      {/* Card */}
+      <div className="w-full max-w-sm">
+        <div className="bg-white dark:bg-slate-900
+          border border-slate-200 dark:border-slate-800
+          rounded-xl shadow-sm px-7 py-8">
 
-      <div className="w-full max-w-md">
-        {/* Logo / Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16
-                          bg-slate-900 dark:bg-slate-700
-                          rounded-2xl mb-4">
-            <Lock className="w-8 h-8 text-white" />
+          {/* Header */}
+          <div className="text-center mb-7">
+            <div className="mx-auto w-11 h-11 rounded-lg
+              bg-indigo-600
+              flex items-center justify-center">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+
+            <h1 className="mt-4 text-xl font-semibold">
+              Welcome back
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Sign in to continue
+            </p>
           </div>
 
-          <h1 className="text-2xl font-bold">
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
-          </h1>
-
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {isLogin
-              ? 'Welcome back! Please enter your details.'
-              : 'Get started with your free account.'}
-          </p>
-        </div>
-
-        {/* Card */}
-        <div className="bg-white dark:bg-gray-800
-                        border border-gray-200 dark:border-gray-700
-                        rounded-xl shadow-sm p-8">
-
-          {/* Tabs */}
-          <div className="flex gap-1 mb-8 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition
-                ${isLogin
-                  ? 'bg-white dark:bg-gray-900 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300'}`}
-            >
-              Sign In
-            </button>
-
-            <button
-              onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-md transition
-                ${!isLogin
-                  ? 'bg-white dark:bg-gray-900 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300'}`}
-            >
-              Sign Up
-            </button>
-          </div>
+          {/* Error */}
+          {error && (
+            <div className="mb-4 text-sm
+              text-red-600 dark:text-red-400
+              bg-red-50 dark:bg-red-950/30
+              border border-red-200 dark:border-red-900
+              rounded-md px-3 py-2">
+              {error}
+            </div>
+          )}
 
           {/* Form */}
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Email
               </label>
-              <div className="relative">
+              <div className="relative mt-1.5">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2
-                                text-gray-400 w-5 h-5" />
+                  w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg outline-none
-                            bg-white dark:bg-gray-900
-                            border border-gray-300 dark:border-gray-700
-                            text-gray-900 dark:text-gray-100"
+                  className="w-full pl-9 pr-3 py-2 rounded-md
+                    bg-white dark:bg-slate-950
+                    border border-slate-300 dark:border-slate-700
+                    text-sm
+                    focus:outline-none focus:ring-1
+                    focus:ring-indigo-600"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Password
               </label>
-              <div className="relative">
+              <div className="relative mt-1.5">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2
-                                text-gray-400 w-5 h-5" />
+                  w-4.5 h-4.5 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  className="w-full pl-10 pr-12 py-2.5 rounded-lg outline-none
-                            bg-white dark:bg-gray-900
-                            border border-gray-300 dark:border-gray-700
-                            text-gray-900 dark:text-gray-100"
+                  className="w-full pl-9 pr-10 py-2 rounded-md
+                    bg-white dark:bg-slate-950
+                    border border-slate-300 dark:border-slate-700
+                    text-sm
+                    focus:outline-none focus:ring-1
+                    focus:ring-indigo-600"
                 />
                 <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2
-                            text-gray-400 hover:text-gray-200"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2
+                    text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
+            {/* Button */}
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-2.5 rounded-lg font-medium
-                        bg-slate-900 dark:bg-slate-700
-                        text-white hover:opacity-90
-                        transition disabled:opacity-50"
+              className="w-full mt-2 py-2 rounded-md
+                bg-indigo-600 hover:bg-indigo-700
+                text-sm font-medium text-white
+                transition disabled:opacity-50"
             >
-              {loading ? 'Loading…' : isLogin ? 'Sign In' : 'Create Account'}
+              {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </div>
         </div>

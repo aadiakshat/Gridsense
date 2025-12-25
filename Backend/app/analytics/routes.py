@@ -12,6 +12,7 @@ import pandas as pd
 from app.schemas import PowerReadingCreate, PowerReadingOut
 from app.ml.features import build_features
 from app.ml.model import detect_anomaly
+from app.ws.routes import manager
 
 
 router = APIRouter( 
@@ -93,7 +94,7 @@ def debug_count(db: Session = Depends(get_db)):
     }
 # ---------------- POWER INGEST + ML ----------------
 @router.post("/power", response_model=PowerReadingOut)
-def ingest_power(
+async def ingest_power(
     data: PowerReadingCreate,
     db: Session = Depends(get_db)
 ):
@@ -108,6 +109,8 @@ def ingest_power(
     db.add(reading)
     db.commit()
     db.refresh(reading)
+
+    
 
 
     # 2️⃣ Fetch recent history
@@ -138,6 +141,18 @@ def ingest_power(
     reading.anomaly_score = score
     db.commit()
 
+
+    await manager.broadcast({
+        "type": "power_update",
+        "data": {
+            "timestamp": reading.timestamp.isoformat(),
+            "power": reading.power,
+            "is_anomaly": reading.is_anomaly,
+            "score": reading.anomaly_score
+        }
+    })
+
+    
     return reading
 
 # ---------------- ANOMALIES ----------------

@@ -1,10 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import React, { useState, useEffect,useRef } from 'react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area ,Cell} from 'recharts';
 import { Zap, TrendingUp, Activity, AlertCircle } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8000';
+
+const exportTableToPDF = (title, columns, rows) => {
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(16);
+  doc.text(title, 14, 20);
+
+  // Timestamp
+  doc.setFontSize(10);
+  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
+
+  autoTable(doc, {
+    startY: 35,
+    head: [columns],
+    body: rows,
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [30, 64, 175], // blue
+      textColor: 255,
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250],
+    },
+  });
+
+  doc.save(`${title.replace(/\s+/g, "_")}.pdf`);
+};
+
 
 const authFetch = async (url) => {
   const token = localStorage.getItem('access_token');
@@ -63,102 +97,104 @@ const StatCard = ({ title, value, unit, subtitle, icon: Icon, color }) => (
 );
 
 // DailyEnergyChart Component
-const DailyEnergyChart = ({ data }) => (
-  <div className="bg-white dark:bg-gray-800
-                rounded-xl shadow-sm p-6
-                border border-gray-100 dark:border-gray-700">
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Daily Energy Consumption</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your energy usage over time</p>
-    </div>
-    <ResponsiveContainer width="100%" height={320}>
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id="colorEnergy" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#4285f4" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#4285f4" stopOpacity={0}/>
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-        <XAxis 
-          dataKey="date" 
-          stroke="#9e9e9e"
-          tick={{ fontSize: 12, fill: '#757575' }}
-          tickLine={false}
-        />
-        <YAxis 
-          stroke="#9e9e9e"
-          tick={{ fontSize: 12, fill: '#757575' }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <Tooltip 
-          contentStyle={{ 
-            backgroundColor: '#fff', 
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}
-          formatter={(value) => [`${value} kWh`, 'Energy']}
-          labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
-        />
-        <Area 
-          type="monotone" 
-          dataKey="total_energy" 
-          stroke="#4285f4" 
-          strokeWidth={3}
-          fill="url(#colorEnergy)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  </div>
-);
 
-// HourlyPowerChart Component
-const HourlyPowerChart = ({ data }) => (
-  <div className="bg-white dark:bg-gray-800
-                rounded-xl shadow-sm p-6
-                border border-gray-100 dark:border-gray-700">
-    <div className="mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Daily Energy Consumption</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your energy usage over time</p>
+const DailyEnergyChart = ({ data, anomalies }) => {
+  const anomalyDates = new Set(
+    anomalies.map(a =>
+      new Date(a.timestamp).toISOString().split("T")[0]
+    )
+  );
+
+  const chartData = data.map(point => ({
+    ...point,
+    hasAnomaly: anomalyDates.has(point.date)
+  }));
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Daily Energy Consumption
+      </h3>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="energyGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#4285f4" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#4285f4" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip formatter={(v) => `${v} kWh`} />
+
+          <Area
+            type="monotone"
+            dataKey="total_energy"
+            stroke="#4285f4"
+            strokeWidth={3}
+            fill="url(#energyGradient)"
+            dot={({ cx, cy, payload }) =>
+              payload.hasAnomaly ? (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={5}
+                  fill="#ef4444"
+                  stroke="#fff"
+                  strokeWidth={2}
+                />
+              ) : (
+                <circle cx={cx} cy={cy} r={3} fill="#4285f4" />
+              )
+            }
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
-    <ResponsiveContainer width="100%" height={320}>
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-        <XAxis 
-          dataKey="hour" 
-          stroke="#9e9e9e"
-          tick={{ fontSize: 12, fill: '#757575' }}
-          tickLine={false}
-          label={{ value: 'Hour', position: 'insideBottom', offset: -5, fill: '#757575' }}
-        />
-        <YAxis 
-          stroke="#9e9e9e"
-          tick={{ fontSize: 12, fill: '#757575' }}
-          tickLine={false}
-          axisLine={false}
-        />
-        <Tooltip 
-          contentStyle={{ 
-            backgroundColor: '#fff', 
-            border: 'none',
-            borderRadius: '8px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}
-          formatter={(value) => [`${value} W`, 'Avg Power']}
-          labelStyle={{ fontWeight: 600, marginBottom: '4px' }}
-          cursor={{ fill: 'rgba(66, 133, 244, 0.1)' }}
-        />
-        <Bar 
-          dataKey="avg_power" 
-          fill="#34a853" 
-          radius={[8, 8, 0, 0]}
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
+  );
+};
+
+
+const HourlyPowerChart = ({ data, anomalies }) => {
+  const anomalyHours = new Set(
+    anomalies.map(a => new Date(a.timestamp).getHours())
+  );
+
+  const chartData = data.map(point => ({
+    ...point,
+    hasAnomaly: anomalyHours.has(Number(point.hour))
+  }));
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        Hourly Power Consumption
+      </h3>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="hour" />
+          <YAxis />
+          <Tooltip formatter={(v) => `${v} W`} />
+
+          <Bar dataKey="avg_power" radius={[6, 6, 0, 0]}>
+            {chartData.map((entry, index) => (
+              <Cell
+                key={index}
+                fill={entry.hasAnomaly ? "#ef4444" : "#34a853"}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
 
 // PeakLoadsTable Component
 const PeakLoadsTable = ({ data, threshold, onThresholdChange }) => (
@@ -198,6 +234,24 @@ const PeakLoadsTable = ({ data, threshold, onThresholdChange }) => (
         </span>
       </div>
     </div>
+    <button
+      onClick={() =>
+        exportTableToPDF(
+          "Peak Load Events",
+          ["Timestamp", "Power (W)", "Voltage (V)", "Current (A)"],
+          data.map(row => [
+            new Date(row.timestamp).toLocaleString(),
+            row.power,
+            row.voltage,
+            row.current
+          ])
+        )
+      }
+      className="px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm
+                hover:bg-blue-700 transition"
+    >
+      Export PDF
+    </button>
 
     <div className="overflow-x-auto rounded-lg
                     border border-gray-200 dark:border-gray-700">
@@ -283,7 +337,24 @@ const AnomalyTable = ({ data }) => (
     <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-4">
       ⚠️ ML Detected Anomalies
     </h3>
-
+    <button
+      onClick={() =>
+        exportTableToPDF(
+          "Peak Load Events",
+          ["Timestamp", "Power (W)", "Voltage (V)", "Current (A)"],
+          data.map(row => [
+            new Date(row.timestamp).toLocaleString(),
+            row.power,
+            row.voltage,
+            row.current
+          ])
+        )
+      }
+      className="px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm
+                hover:bg-blue-700 transition"
+    >
+      Export PDF
+    </button>
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-red-50 dark:bg-red-900/30">
@@ -333,6 +404,72 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const token = localStorage.getItem('access_token');
   const [anomalies, setAnomalies] = useState([]);
+  const [livePower, setLivePower] = useState([]);
+
+  // Add these state variables at the top with your other useState declarations
+const [wsConnected, setWsConnected] = useState(false);
+const [liveStats, setLiveStats] = useState(null);
+const wsRef = useRef(null);
+
+// Replace your WebSocket useEffect with this:
+useEffect(() => {
+    const connectWebSocket = () => {
+      console.log('🔌 Connecting to WebSocket...');
+      
+      // Use 127.0.0.1 to match your API
+      const ws = new WebSocket('ws://127.0.0.1:8000/ws/live');
+      
+      ws.onopen = () => {
+        console.log('✅ WebSocket connected!');
+        setWsConnected(true);
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          console.log('📨 WebSocket message:', msg);
+          
+          if (msg.type === 'connection') {
+            console.log('🎉 Connection acknowledged');
+          } else if (msg.type === 'stats_update') {
+            console.log('🔴 Live stats update:', msg.data);
+            setLiveStats(msg.data);
+            
+            // Optionally update live power display
+            setLivePower(prev => [...prev.slice(-20), msg.data]); // Keep last 20 readings
+          }
+        } catch (err) {
+          console.error('❌ Error parsing message:', err);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        setWsConnected(false);
+      };
+      
+      ws.onclose = (event) => {
+        console.log('🔌 WebSocket closed. Reconnecting in 3s...');
+        setWsConnected(false);
+        setLiveStats(null);
+        
+        // Auto-reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+      
+      wsRef.current = ws;
+    };
+    
+    connectWebSocket();
+    
+    // Cleanup
+    return () => {
+      console.log('🧹 Cleaning up WebSocket');
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
 
   if (!token) {
@@ -436,19 +573,43 @@ const Dashboard = () => {
                 from-blue-50 via-indigo-50 to-purple-50
                 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900
                 text-gray-900 dark:text-gray-100">
-      <header className="bg-white dark:bg-gray-800
-                   shadow-sm border-b
-                   border-gray-200 dark:border-gray-700">
-
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Zap className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between">
+
+            {/* LEFT: Logo + Title */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  GridSense
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Real-time power analytics dashboard
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Energy Monitor</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Real-time power analytics dashboard</p>
+
+            {/* RIGHT: LIVE INDICATOR */}
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                {wsConnected && (
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                )}
+                <span
+                  className={`relative inline-flex rounded-full h-3 w-3 ${
+                    wsConnected ? "bg-green-500" : "bg-gray-400"
+                  }`}
+                />
+              </span>
+
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                {wsConnected ? "LIVE" : "OFFLINE"}
+              </span>
             </div>
+
           </div>
         </div>
       </header>
@@ -499,8 +660,8 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <DailyEnergyChart data={dailyEnergy} />
-          <HourlyPowerChart data={hourlyPower} />
+          <DailyEnergyChart data={dailyEnergy} anomalies={anomalies} />
+          <HourlyPowerChart data={hourlyPower} anomalies={anomalies} />
         </div>
 
         <PeakLoadsTable 
