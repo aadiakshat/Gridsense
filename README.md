@@ -187,9 +187,9 @@ npm run dev
 | `/analytics/predict-energy`       | ML-based energy forecast |
 | `/ws/live`                        | Real-time power updates  |
 
+### Project Structure
 
-
----
+```
 Gridsense/
 ├── Backend/
 │   ├── app/
@@ -219,7 +219,7 @@ Gridsense/
 │
 ├── README.md
 └── .gitignore
-
+```
 
 
 ## 📖 What This Project Demonstrates
