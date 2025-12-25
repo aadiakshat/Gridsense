@@ -1,168 +1,224 @@
-⚡ GridSense — Real-Time Energy Analytics & ML Forecasting Platform
+# ⚡ GridSense — Real-Time Energy Analytics & ML Forecasting Platform
 
 GridSense is a full-stack energy monitoring and analytics platform that ingests live power readings, detects anomalies using machine learning, and generates short-term energy forecasts through an interactive dashboard.
 
-The project focuses on real-world backend engineering and explainable ML, not toy demos or black-box models.
+The project focuses on **real-world backend engineering and explainable ML**, not toy demos or black-box models.
 
-🚀 Key Features
-🔐 Secure Data Ingestion
+---
 
-JWT-protected REST APIs for ingesting power readings
+## 🚀 Key Features
 
-Stores voltage, current, power, energy, timestamps
+### 🔐 Secure Data Ingestion
+- JWT-protected REST APIs for ingesting power readings  
+- Stores voltage, current, power, energy, and timestamps  
+- **SQLite** used for persistent storage with a production-ready schema  
 
-SQLite used for persistent storage (production-ready schema)
+---
 
-📊 Energy Analytics
+### 📊 Energy Analytics
+- Daily energy consumption aggregation  
+- Hourly average power analysis  
+- Peak load detection with configurable thresholds  
+- Historical analytics powered by SQL queries (no hardcoded data)  
 
-Daily energy consumption aggregation
+---
 
-Hourly average power analysis
+### 🚨 ML-Based Anomaly Detection
+- Uses **Isolation Forest** for anomaly detection  
+- Rolling feature engineering on recent sensor data  
+- Stores anomaly flags and scores in the database  
+- Visual anomaly indicators on charts and tables  
 
-Peak load detection with configurable thresholds
+---
 
-Historical analytics backed by SQL queries (not hardcoded data)
+### 🔮 Energy Forecasting (Machine Learning)
+- Short-term (hour-level) energy forecasting  
+- Lightweight **Linear Regression** model  
+- Rolling statistical features:
+  - Last observed energy  
+  - Rolling mean energy  
+  - Hour of day  
+  - Weekend indicator  
+- Forecasts generated **strictly for future timestamps**  
+- Designed as a **baseline, explainable ML model**  
 
-🚨 ML-Based Anomaly Detection
+---
 
-Uses Isolation Forest for anomaly detection
+### 📡 Real-Time Updates
+- WebSocket support for live power updates  
+- Real-time dashboard refresh without polling  
 
-Rolling feature engineering on recent sensor data
+---
 
-Stores anomaly flags and scores in the database
+### 📤 Data Export
+- Export analytics tables (peak loads, anomalies) as **PDF**
+- Designed for reporting and audit use cases  
 
-Visual anomaly indicators on charts and tables
+---
 
-🔮 Energy Forecasting (Machine Learning)
-
-Short-term energy forecasting (hour-level)
-
-Lightweight Linear Regression model
-
-Rolling statistical features:
-
-Last observed energy
-
-Rolling mean energy
-
-Hour of day
-
-Weekend indicator
-
-Forecasts generated strictly for future timestamps
-
-Designed as a baseline, explainable ML model
-
-📡 Real-Time Updates
-
-WebSocket support for live power updates
-
-Real-time dashboard refresh without polling
-
-📤 Data Export
-
-Export analytics tables (peak loads, anomalies) as PDF
-
-Designed for reporting and audit use-cases
-
-🧠 Forecasting Design Philosophy
+## 🧠 Forecasting Design Philosophy
 
 This project intentionally avoids over-complex models (LSTM, transformers) in favor of:
 
-Explainability
+- Explainability  
+- Stability with sparse real-world data  
+- Easy debugging and reasoning  
+- Interview-safe ML decisions  
 
-Stability with sparse real-world data
+The forecast iteratively predicts future energy values by feeding previous predictions back into the model using rolling statistical features.
 
-Easy debugging and reasoning
+---
 
-Interview-safe ML decisions
+## 🛠 Tech Stack
 
-The forecast iteratively predicts future energy values by feeding previous predictions back into the model using rolling statistics.
+### Backend
+- **FastAPI**
+- **SQLAlchemy**
+- **SQLite**
+- **JWT Authentication**
+- **WebSockets**
+- **Pandas**
+- **Scikit-learn**
 
-🛠 Tech Stack
-Backend
+### Frontend
+- **React (Vite)**
+- **Tailwind CSS**
+- **Recharts**
+- **Lucide Icons**
 
-FastAPI
+### Machine Learning
+- Isolation Forest (Anomaly Detection)
+- Linear Regression (Energy Forecasting)
+- Time-series feature engineering
 
-SQLAlchemy
+---
 
-SQLite
+## 🔐 Security
+- All analytics and forecasting endpoints are JWT-protected  
+- Secure token-based access  
+- Ready for role-based access control (RBAC)
 
-JWT Authentication
+---
+## ⚙️ How to Run Locally
 
-WebSockets
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/gridsense.git
+cd gridsense
+```
 
-Pandas
+###  2.Backend Setup
+## 📈 API Endpoints (Core)
+Create virtual environment
+```
+python -m venv venv
+source venv/bin/activate   # Linux / Mac
+venv\Scripts\activate      # Windows
+```
 
-Scikit-learn
+Install Dependencies
 
-Frontend
+```
+pip install -r requirements.txt
+```
+Environment Variable
 
-React (Vite)
+```
+DATABASE_URL=sqlite:///./gridsense.db
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
 
-Tailwind CSS
+### 3.Frontend Setup
 
-Recharts
+```
+cd frontend
+npm install
+npm run dev
+```
 
-Lucide Icons
+### Authentication Flow
+ 1. Login using /auth/login
+ 2. Store returned JWT token in frontend
+ 3. Include token in all protected requests:
 
-Machine Learning
 
-Isolation Forest (Anomaly Detection)
+### Core API Endpoints
+| Endpoint                          | Description              |
+| --------------------------------- | ------------------------ |
+| `/auth/login`                     | User authentication      |
+| `/analytics/daily-energy`         | Daily energy aggregation |
+| `/analytics/hourly-average-power` | Hourly power analysis    |
+| `/analytics/peak-loads`           | Peak load detection      |
+| `/analytics/anomalies`            | ML-detected anomalies    |
+| `/analytics/predict-energy`       | ML-based energy forecast |
+| `/ws/live`                        | Real-time power updates  |
 
-Linear Regression (Energy Forecasting)
 
-Time-series feature engineering
 
-🔐 Security
+---
+### 🗂 Project Structure
 
-All analytics and forecasting endpoints are JWT-protected
+app/
+ ├── analytics/
+ ├── sensors/
+ ├── auth/
+ ├── ml/
+ ├── ml2/
+ ├── ws/
+ ├── database.py
+ └── main.py
+frontend/
+ ├── pages/
+ ├── components/
+ └── main.jsx
 
-Secure token-based access
 
-Ready for role-based access control (RBAC)
+## 📖 What This Project Demonstrates
+- End-to-end ML integration (training → inference → visualization)  
+- Real backend engineering (authentication, database, WebSockets)  
+- Handling real-world issues: sparse data, time alignment, auth blocking ML  
+- Explainable ML over hype-driven models  
+- Production-style API design and data persistence  
 
-📈 API Endpoints (Core)
-Endpoint	Description
-/auth/login	User authentication
-/analytics/daily-energy	Daily energy aggregation
-/analytics/hourly-average-power	Hourly power analysis
-/analytics/peak-loads	Peak load detection
-/analytics/anomalies	ML-detected anomalies
-/analytics/predict-energy	ML-based energy forecast
-/ws/live	Real-time power updates
-📖 What This Project Demonstrates
+---
 
-End-to-end ML integration (training → inference → visualization)
+## 📌 Project Status
+- Fully functional backend and frontend  
+- Stable ML pipelines  
+- SQLite persistence  
+- Export functionality implemented  
+- Designed for extensibility  
 
-Real backend engineering (auth, DB, WebSockets)
+---
 
-Handling real issues: sparse data, time alignment, auth blocking ML
+## 🚀 Future Enhancements
+- Confidence intervals for forecasts  
+- Scheduled model retraining  
+- Email / SMS alerts for anomalies  
+- Multi-sensor support  
+- PostgreSQL migration for large-scale deployment  
 
-Explainable ML over hype-driven models
+---
+---
 
-Production-style API and data persistence
+## 👤 Author
 
-📌 Project Status
+**Adarsh Akshat**
 
-Fully functional backend and frontend
+- B.Tech (Electrical & Electronics Engineering)
+- Interested in Backend Engineering, Systems Design & Applied Machine Learning
+- Focused on explainable ML and production-grade backend systems
 
-Stable ML pipelines
+📍 India  
+💻 GitHub: https://github.com/aadiakshat  
 
-SQLite persistence
+---
 
-Export functionality implemented
+## 📜 License
 
-Designed for extensibility
+This project is open-source and available under the **MIT License**.
 
-🚀 Future Enhancements
+You are free to use, modify, and distribute this project with attribution.
 
-Confidence intervals for forecasts
-
-Scheduled model retraining
-
-Email / SMS alerts for anomalies
-
-Multi-sensor support
-
-PostgreSQL migration for large-scale deployment
