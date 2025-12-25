@@ -4,6 +4,8 @@ import { Zap, TrendingUp, Activity, AlertCircle } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Link } from "react-router-dom";
+
 
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -593,6 +595,15 @@ useEffect(() => {
             </div>
 
             {/* RIGHT: LIVE INDICATOR */}
+
+            <Link
+              to="/forecast"
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm
+                        hover:bg-blue-700 transition"
+            >
+              Forecast Analysis
+            </Link>
+
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 {wsConnected && (

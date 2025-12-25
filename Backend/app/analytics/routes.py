@@ -175,3 +175,63 @@ def get_anomalies(db: Session = Depends(get_db)):
         }
         for a in anomalies
     ]
+# ---------------- ENERGY PREDICTION ----------------
+@router.get("/predict-energy")
+def predict_energy(
+    hours: int = 6,
+    db: Session = Depends(get_db)
+):
+    try:
+        rows = (
+            db.query(PowerReading)
+            .order_by(PowerReading.timestamp.desc())
+            .limit(100)
+            .all()
+        )
+
+        if len(rows) < 2:
+            return {"error": "Not enough data for forecast", "count": len(rows)}
+
+        df = pd.DataFrame([
+            {
+                "timestamp": r.timestamp,
+                "energy": r.energy
+            }
+            for r in rows
+            if r.energy is not None
+        ])
+
+        if df.empty:
+            return {"error": "No valid energy values"}
+
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df = df.sort_values("timestamp")
+
+        # Import the forecast function
+        from app.ml2.energy_forecast_model import forecast_energy
+        predictions = forecast_energy(df, steps=hours)
+
+        if not predictions:
+            return {"error": "Forecast generation failed", "details": "No predictions generated"}
+
+        return {
+            "model": predictions[0].get("type", "forecast"),
+            "horizon_hours": hours,
+            "predictions": [
+                {
+                    "timestamp": p["timestamp"].isoformat(),
+                    "predicted_energy": p["energy"],
+                    "is_future": p.get("is_future", True),
+                    "type": p.get("type", "forecast")
+                }
+                for p in predictions
+            ]
+        }
+
+    except ImportError as e:
+        return {"error": f"ML module not found: {str(e)}", "status": "import_error"}
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Prediction error:\n{error_details}")
+        return {"error": str(e), "type": type(e).__name__}

@@ -7,7 +7,6 @@ from app.auth.routesauth import router as auth_router
 from app.ws.routes import router as ws_router
 from app.database import Base,engine
 from app.usermodel import User
-
 from dotenv import load_dotenv
 
 
